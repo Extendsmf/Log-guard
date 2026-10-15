@@ -1,0 +1,24 @@
+# Виртуальное окружение Python
+.venv/
+venv/
+ENV/
+
+# Кэш Python и байткод
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Артефакты работы LogGuard (создаются при тестах)
+alerts.json
+blocked_ips.txt
+*.log
+
+# Настройки IDE и редакторов
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Системные файлы ОС
+.DS_Store
+Thumbs.db

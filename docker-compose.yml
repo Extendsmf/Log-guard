@@ -1,0 +1,20 @@
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    command: /bin/sh -c "rm -f /var/log/nginx/access.log && nginx -g 'daemon off;'"
+    volumes:
+      - nginx_logs:/var/log/nginx
+
+  logguard:
+    build: .
+    depends_on:
+      - web
+    command: ["--file", "/logs/access.log", "--follow"]
+    volumes:
+      - nginx_logs:/logs:ro
+      - .:/app
+
+volumes:
+  nginx_logs:

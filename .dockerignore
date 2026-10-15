@@ -1,0 +1,25 @@
+# Исключаем локальное окружение и Git
+.venv/
+venv/
+.git/
+.gitignore
+
+# Кэш Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Локальные логи и артефакты
+alerts.json
+blocked_ips.txt
+*.log
+
+# Настройки IDE
+.vscode/
+.idea/
+
+# Документация и compose
+README.md
+docker-compose.yml
+Dockerfile
+.dockerignore
