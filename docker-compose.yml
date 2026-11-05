@@ -8,13 +8,35 @@ services:
       - nginx_logs:/var/log/nginx
 
   logguard:
-    build: .
-    depends_on:
-      - web
-    command: ["--file", "/logs/access.log", "--follow"]
+      build: .
+      user: "0:0"   # <-- ДОБАВЬ ЭТУ СТРОЧКУ
+      depends_on:
+        - web
+      ports:
+        - "8000:8000"
+      command: ["--file", "/logs/access.log", "--follow"]
+      volumes:
+        - nginx_logs:/logs:ro
+        - .:/app
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
     volumes:
-      - nginx_logs:/logs:ro
-      - .:/app
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - logguard
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
 
 volumes:
   nginx_logs:
+  alerts_data:

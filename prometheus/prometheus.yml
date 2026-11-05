@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "logguard"
+    static_configs:
+      - targets: ["logguard:8000"]
