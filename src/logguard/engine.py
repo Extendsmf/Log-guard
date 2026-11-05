@@ -1,9 +1,10 @@
-from .rules.path_traversal import PathTraversalRule
-from .rules.sqli import SqlInjectionRule
-from .rules.scanner import VulnerabilityScannerDetector
 from .models import Alert, LogEvent
 from .rules.base import BaseRule
 from .rules.brute_force import DirectoryBruteforceRule
+from .rules.path_traversal import PathTraversalRule
+from .rules.scanner import VulnerabilityScannerDetector
+from .rules.sqli import SqlInjectionRule
+
 
 class DetectionEngine:
 

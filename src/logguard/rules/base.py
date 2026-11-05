@@ -1,6 +1,7 @@
-from ..models import Alert, LogEvent
-from typing import Optional
 from abc import ABC, abstractmethod
+
+from ..models import Alert, LogEvent
+
 
 class BaseRule(ABC):
     rule_name: str
@@ -9,7 +10,7 @@ class BaseRule(ABC):
     mitre_tactic: str
 
     @abstractmethod
-    def check(self, event: LogEvent) -> Optional[Alert]:
+    def check(self, event: LogEvent) -> Alert | None:
         
         pass
 

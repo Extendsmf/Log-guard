@@ -1,6 +1,5 @@
-import time
 import os
-
+import time
 
 
 def read_gen(filepath, follow):

@@ -1,8 +1,9 @@
-from typing import Optional
-from datetime import datetime, timezone
+import re
+from datetime import UTC, datetime
+
 from ..models import Alert, LogEvent
 from .base import BaseRule
-import re
+
 
 class PathTraversalRule(BaseRule):
 
@@ -11,13 +12,13 @@ class PathTraversalRule(BaseRule):
     mitre_technique_id = "T1083" #File and Directory Discovery
     mitre_tactic = "Discovery"
 
-    def check(self, event: LogEvent) -> Optional[Alert]:
+    def check(self, event: LogEvent) -> Alert | None:
         text = event.normalised_path
         pattern = r"\.\./|\.\.\\|/etc/passwd|/etc/shadow|/proc/self/|windows/win\.ini|boot\.ini"
         result = re.search(pattern, text, re.IGNORECASE)
 
         if result:
-            alert = Alert(datetime.now(timezone.utc), self.rule_name, self.severity, self.mitre_technique_id, self.mitre_tactic, event.ip,  result.group(0), event)
+            alert = Alert(datetime.now(UTC), self.rule_name, self.severity, self.mitre_technique_id, self.mitre_tactic, event.ip,  result.group(0), event)
             return alert
         else:
             return None

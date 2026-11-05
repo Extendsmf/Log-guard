@@ -1,8 +1,8 @@
 import re
-from urllib.parse import unquote
-from .models import LogEvent
 from datetime import datetime
+from urllib.parse import unquote
 
+from .models import LogEvent
 
 LOG_PATTERN = re.compile(
         r"""

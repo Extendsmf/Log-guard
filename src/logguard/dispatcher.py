@@ -1,5 +1,7 @@
 import json
+
 from .models import Alert
+
 
 class AlertDispatcher:
 

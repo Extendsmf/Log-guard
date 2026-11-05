@@ -1,0 +1,6 @@
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# Игнорируем длину строк, имя папки с дефисом и широкий except
+ignore = ["E501", "N999", "BLE001"]

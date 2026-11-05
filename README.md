@@ -1,76 +1,71 @@
-# LogGuard — Log Intrusion Detector (Mini-SIEM)
+# LogGuard — Log Intrusion Detector & Observability Stack (Mini-SIEM)
 
-Легковесный сервис на Python для анализа логов Nginx в реальном времени. Читает поток логов (`tail -f`), находит веб-атаки и сканеры, выявляет перебор директорий через скользящее окно времени и сохраняет структурированные алерты в JSON с имитацией блокировки IP.
+Легковесный сервис на Python для потокового анализа веб-логов Nginx в реальном времени (`tail -f`). Обнаруживает веб-атаки, выявляет перебор директорий через скользящее окно времени, экспортирует метрики безопасности в **Prometheus** и визуализирует инциденты в **Grafana**.
 
-Написан на чистой стандартной библиотеке Python (без сторонних зависимостей).
+В проект встроен автоматический **CI/CD пайплайн (GitHub Actions)** с тестированием, линтингом и DevSecOps-сканированием уязвимостей через **Trivy**.
 
 ---
 
 ## Что умеет детектировать
 
 * **SQL Injection (T1190):** поиск `UNION SELECT`, обхода условий (`' OR 1=1`), комментариев (`--`) и `SLEEP()`.
-* **Path Traversal (T1083):** попытки выхода из директории (`../`, `..\`) и чтение системных файлов (`/etc/passwd`, `win.ini`) с защитой от двойного URL-кодирования (`%252e`).
-* **Directory Brute-force (T1083):** поведенческий анализ — отслеживает превышение порога в $\ge 5$ ответов `404` за 10 секунд с одного IP.
-* **Сканеры уязвимостей (T1595.002):** выявление автоматизированных утилит по User-Agent (`sqlmap`, `nikto`, `gobuster`, `dirbuster`, `nuclei`).
+* **Path Traversal (T1083):** попытки выхода из директории (`../`, `..\`) и чтение системных файлов с защитой от double URL-encoding (`%252e`).
+* **Directory Brute-force (T1083):** поведенческий анализ — отслеживание $\ge 5$ ответов `404` за 10 секунд с одного IP (скользящее окно `deque`).
+* **Сканеры уязвимостей (T1595.002):** детект утилит по User-Agent (`sqlmap`, `nikto`, `gobuster`, `dirbuster`, `nuclei`).
 
 ---
 
-## Быстрый старт (Docker Compose)
+## Архитектура стенда (Docker Compose)
 
-Проект поставляется с готовым стендом: контейнер с **Nginx** (пишет логи) и контейнер с **LogGuard** (слушает их в режиме `:ro`).
+Проект разворачивает изолированную сеть из 4 сервисов:
+* **`web`** (Nginx, `:8080`) — веб-сервер, генерирующий поток `access.log`.
+* **`logguard`** (`:8000`) — ядро детекта, отдающее метрики на эндпоинт `/metrics`.
+* **`prometheus`** (`:9090`) — TSDB, опрашивающая LogGuard раз в 5 секунд.
+* **`grafana`** (`:3000`, `admin:admin`) — дашборд мониторинга и графики атак.
 
-### 1. Запуск
+---
+
+## Быстрый старт
+
+### 1. Запуск стека
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
-### 2. Проверка работы (из соседнего терминала)
-
-* **Тест SQLi (критичный алерт + бан IP):**
+### 2. Тестирование атак
+* **SQL Injection (критичный алерт + изоляция IP):**
   ```bash
   curl "http://localhost:8080/products.php?id=1%27%20UNION%20SELECT%20null--%20"
   ```
-
-* **Тест брутфорса директорий:**
+* **Брутфорс директорий (всплеск 404):**
   ```bash
-  for dir in admin backup secret config .git; do curl -s "http://localhost:8080/$dir" -A "gobuster/3.1"; sleep 0.5; done
+  for i in {1..7}; do curl -s "http://localhost:8080/admin_$i" > /dev/null; done
   ```
 
-### 3. Результаты работы
-* `alerts.json` — структурированные события в формате NDJSON.
-* `blocked_ips.txt` — список IP-адресов, заблокированных модулем Active Response (для атак уровня HIGH и CRITICAL).
+### 3. Где смотреть результаты
+* **Метрики в Prometheus:** `http://localhost:9090` (метрики `logguard_alerts_total` и `logguard_logs_processed_total`).
+* **Дашборды Grafana:** `http://localhost:3000` (логин/пароль: `admin` / `admin`).
+* **Артефакты инцидентов:** `alerts.json` (события в NDJSON с маппингом MITRE) и `blocked_ips.txt` (Active Response).
 
 ---
 
-## Формат алерта (`alerts.json`)
+## CI/CD & DevSecOps
 
-Каждое срабатывание записывается в одну строку JSON с метаданными MITRE ATT&CK и сырым логом для расследования:
-
-```json
-{
-  "timestamp": "2026-10-15T13:34:54.120531+00:00",
-  "rule_name": "WEB_SQL_INJECTION",
-  "severity": "CRITICAL",
-  "mitre": {
-    "technique_id": "T1190",
-    "tactic": "Initial Access"
-  },
-  "source_ip": "172.18.0.1",
-  "indicator": "UNION SELECT",
-  "raw_log": "172.18.0.1 - - [15/Oct/2026:13:34:54 +0000] \"GET /products.php?id=1%27%20UNION%20SELECT%20null--%20 HTTP/1.1\" 404 153 \"-\" \"curl/8.22.0\" \"-\""
-}
-```
+При каждом пуше в ветку `main` запускается GitHub Actions workflow:
+1. **Linter:** статический анализ кода через **Ruff**.
+2. **Unit Tests:** автоматические тесты парсера и логики правил через **Pytest**.
+3. **Container Security:** аудит собранного Docker-образа на CVE-уязвимости с помощью **Trivy**.
 
 ---
 
 ## Запуск без Docker (CLI)
 
 ```bash
+pip install -r requirements.txt
+
 # Разовый анализ готового файла
 python main.py --file access.log
 
 # Мониторинг в реальном времени
 python main.py --file /var/log/nginx/access.log --follow
 ```
-
-

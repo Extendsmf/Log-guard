@@ -1,8 +1,8 @@
-from typing import Optional
-from datetime import datetime, timezone
+from collections import defaultdict, deque
+from datetime import UTC, datetime
+
 from ..models import Alert, LogEvent
 from .base import BaseRule
-from collections import deque, defaultdict
 
 
 class DirectoryBruteforceRule(BaseRule):
@@ -17,7 +17,7 @@ class DirectoryBruteforceRule(BaseRule):
         self.window_seconds = window_seconds
         self.state = defaultdict(deque)
 
-    def check(self, event: LogEvent) -> Optional[Alert]:
+    def check(self, event: LogEvent) -> Alert | None:
         if event.status_code != 404:
             return None
 
@@ -27,7 +27,7 @@ class DirectoryBruteforceRule(BaseRule):
             self.state[event.ip].popleft()
 
         if len(self.state[event.ip]) >= self.threshold:
-            alert = Alert(datetime.now(timezone.utc), self.rule_name, self.severity, self.mitre_technique_id, self.mitre_tactic, event.ip,  f"{len(self.state[event.ip])} 404 responses in {self.window_seconds}s", event)
+            alert = Alert(datetime.now(UTC), self.rule_name, self.severity, self.mitre_technique_id, self.mitre_tactic, event.ip,  f"{len(self.state[event.ip])} 404 responses in {self.window_seconds}s", event)
             self.state[event.ip].clear()
             return alert
 

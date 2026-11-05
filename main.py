@@ -1,10 +1,11 @@
 import argparse
 import sys
-from prometheus_client import start_http_server, Counter
 
-from src.logguard.parser import parser
-from src.logguard.engine import DetectionEngine
+from prometheus_client import Counter, start_http_server
+
 from src.logguard.dispatcher import AlertDispatcher
+from src.logguard.engine import DetectionEngine
+from src.logguard.parser import parser
 from src.logguard.reader import read_gen
 
 # Метрики для Prometheus
