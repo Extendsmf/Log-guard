@@ -9,7 +9,7 @@ services:
 
   logguard:
       build: .
-      user: "0:0"   # <-- ДОБАВЬ ЭТУ СТРОЧКУ
+      user: "0:0"   
       depends_on:
         - web
       ports:
