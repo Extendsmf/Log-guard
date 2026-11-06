@@ -1,3 +1,4 @@
+# скрипт для настройки ruff check
 [tool.ruff]
 line-length = 120
 
