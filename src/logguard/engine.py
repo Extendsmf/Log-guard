@@ -4,6 +4,7 @@ from .rules.brute_force import DirectoryBruteforceRule
 from .rules.path_traversal import PathTraversalRule
 from .rules.scanner import VulnerabilityScannerDetector
 from .rules.sqli import SqlInjectionRule
+from .rules.command_injection import CommandInjectionRule
 
 
 class DetectionEngine:
@@ -13,7 +14,8 @@ class DetectionEngine:
             SqlInjectionRule(),
             VulnerabilityScannerDetector(),
             PathTraversalRule(),
-            DirectoryBruteforceRule()
+            DirectoryBruteforceRule(),
+            CommandInjectionRule()
         ]
 
     
